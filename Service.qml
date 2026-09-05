@@ -557,6 +557,7 @@ Item {
         passwordPam: root.passwordPamConfigured,
         fingerprint: root.fingerprintConfigured,
         authenticating: root.authenticating,
+        blankDelayMs: root.blankDelayMs,
         lastEvent: root.lastEvent,
         lastEventAt: root.lastEventAt
       })
@@ -575,5 +576,4 @@ Item {
     }
   }
 }
-
 
