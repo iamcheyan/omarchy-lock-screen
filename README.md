@@ -82,7 +82,7 @@ MIT. See [LICENSE](LICENSE).
 
 # 中文说明：Lock Screen
 
-`iamcheyan Lock Screen` 是一个 Omarchy 锁屏插件。它保留 Omarchy 原生的锁屏实现，只替换锁屏界面外观。
+`Lock Screen` 是一个 Omarchy 锁屏插件。它保留 Omarchy 原生的锁屏实现，只替换锁屏界面外观。
 
 ![Lock Screen 预览](preview.png)
 
