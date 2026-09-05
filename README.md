@@ -1,9 +1,9 @@
-# iamcheyan Lock Screen
+# Lock Screen
 
-`iamcheyan Lock Screen` is an Omarchy lock-screen plugin that keeps Omarchy's
+`Lock Screen` is an Omarchy lock-screen plugin that keeps Omarchy's
 native locking implementation and replaces only the visual interface.
 
-![iamcheyan Lock Screen preview](preview.png)
+![Lock Screen preview](preview.png)
 
 ## Features
 
@@ -80,11 +80,11 @@ MIT. See [LICENSE](LICENSE).
 
 ---
 
-# 中文说明
+# 中文说明：Lock Screen
 
 `iamcheyan Lock Screen` 是一个 Omarchy 锁屏插件。它保留 Omarchy 原生的锁屏实现，只替换锁屏界面外观。
 
-![iamcheyan Lock Screen 预览](preview.png)
+![Lock Screen 预览](preview.png)
 
 ## 功能
 
@@ -152,11 +152,11 @@ MIT，详见 [LICENSE](LICENSE)。
 
 ---
 
-# 日本語
+# 日本語：Lock Screen
 
-`iamcheyan Lock Screen` は、Omarchy 標準のロック処理を維持したまま、ロック画面の見た目だけを置き換えるプラグインです。
+`Lock Screen` は、Omarchy 標準のロック処理を維持したまま、ロック画面の見た目だけを置き換えるプラグインです。
 
-![iamcheyan Lock Screen プレビュー](preview.png)
+![Lock Screen プレビュー](preview.png)
 
 ## 主な機能
 
