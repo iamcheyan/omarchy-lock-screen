@@ -23,7 +23,7 @@ The plugin does not create a second lock daemon, replace PAM configuration, or
 implement a separate authentication flow. Enabling it disables the built-in
 `omarchy.lock` service; disabling it restores the built-in service.
 
-## Installation
+## Installation and Removal
 
 Install from an Omarchy plugin repository:
 
@@ -36,6 +36,12 @@ plugin to return to the native Omarchy lock-screen interface:
 
 ```sh
 omarchy plugin disable iamcheyan.lock-screen
+```
+
+To remove the plugin completely:
+
+```sh
+omarchy plugin remove iamcheyan.lock-screen
 ```
 
 ## Avatar
@@ -115,7 +121,7 @@ MIT. See [LICENSE](LICENSE).
 
 插件不会创建第二个锁屏守护进程，不会修改 PAM 配置，也不会实现另一套认证逻辑。启用插件时会自动禁用 `omarchy.lock`；禁用插件后会恢复原生服务。
 
-## 安装
+## 安装与卸载
 
 ```sh
 omarchy plugin add https://github.com/iamcheyan/omarchy-lock-screen.git --enable
@@ -125,6 +131,12 @@ omarchy plugin add https://github.com/iamcheyan/omarchy-lock-screen.git --enable
 
 ```sh
 omarchy plugin disable iamcheyan.lock-screen
+```
+
+完全移除插件：
+
+```sh
+omarchy plugin remove iamcheyan.lock-screen
 ```
 
 ## 设置头像
@@ -200,7 +212,7 @@ MIT，详见 [LICENSE](LICENSE)。
 
 別のロックデーモン、別の PAM 設定、別の認証フローは追加しません。プラグインを有効にすると `omarchy.lock` が自動的に無効になり、無効化すると標準サービスに戻ります。
 
-## インストール
+## インストールと削除
 
 ```sh
 omarchy plugin add https://github.com/iamcheyan/omarchy-lock-screen.git --enable
@@ -210,6 +222,12 @@ omarchy plugin add https://github.com/iamcheyan/omarchy-lock-screen.git --enable
 
 ```sh
 omarchy plugin disable iamcheyan.lock-screen
+```
+
+プラグインを完全に削除するには：
+
+```sh
+omarchy plugin remove iamcheyan.lock-screen
 ```
 
 ## アバター
