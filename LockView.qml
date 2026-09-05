@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Io
 import Quickshell.Networking
 import Quickshell.Services.UPower
 import qs.Commons
@@ -20,6 +21,7 @@ FocusScope {
   property string passwordText: ""
   property bool showPassword: false
   property bool passwordVisible: false
+  property bool hibernateAvailable: false
 
   readonly property var batteryDevice: UPower.displayDevice
   readonly property bool batteryAvailable: !!(batteryDevice && batteryDevice.isPresent)
@@ -83,6 +85,16 @@ FocusScope {
     onTriggered: {
       root.timeText = Qt.formatDateTime(new Date(), "HH:mm")
       root.dateText = Qt.formatDateTime(new Date(), "dddd, MMMM d")
+    }
+  }
+
+  Process {
+    id: hibernateCheck
+    command: ["busctl", "call", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "CanHibernate"]
+    running: true
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: root.hibernateAvailable = String(text || "").includes("\"yes\"")
     }
   }
 
@@ -388,6 +400,13 @@ FocusScope {
       icon: "󰒲"
       tooltip: "Sleep"
       onClicked: Quickshell.execDetached(["omarchy-system-sleep-lock"])
+    }
+
+    LockCornerButton {
+      visible: root.hibernateAvailable
+      icon: "󰤄"
+      tooltip: "Hibernate"
+      onClicked: Quickshell.execDetached(["busctl", "call", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "Hibernate", "b", "true"])
     }
 
     LockCornerButton {

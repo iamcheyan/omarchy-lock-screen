@@ -29,6 +29,7 @@ Item {
   property int failedAttempts: 0
   property string backgroundPath: ""
   property int backgroundVersion: 0
+  property int blankDelayMs: 5000
   property string lastEvent: "init"
   property string lastEventAt: ""
   property bool strandedLock: false
@@ -105,6 +106,22 @@ Item {
 
   function refreshFingerprintStatus() {
     if (!fingerprintCheckProc.running) fingerprintCheckProc.running = true
+  }
+
+  function loadLockConfig(raw) {
+    var parsed = {}
+    try {
+      parsed = JSON.parse(String(raw || "{}")) || {}
+    } catch (error) {
+      console.warn("omarchy lock: invalid lock-screen.json", error)
+      blankDelayMs = 5000
+      return
+    }
+
+    var seconds = Number(parsed.blankDelaySeconds)
+    blankDelayMs = isFinite(seconds) && seconds >= 0
+      ? Math.round(seconds * 1000)
+      : 5000
   }
 
   function logEvent(event) {
@@ -413,7 +430,7 @@ Item {
 
   Timer {
     id: idleBlankTimer
-    interval: 5000
+    interval: root.blankDelayMs
     repeat: false
     property double armedAt: 0
     onTriggered: {
@@ -490,6 +507,15 @@ Item {
     onFileChanged: reload()
   }
 
+  FileView {
+    path: root.home + "/.config/omarchy/lock-screen.json"
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.loadLockConfig(text())
+    onLoadFailed: root.blankDelayMs = 5000
+    onFileChanged: reload()
+  }
+
   // No lock before PAM is known good. An answer from before then may be stale --
   // the failsafe can be cleared from a TTY -- so re-ask rather than act on it.
   onPasswordPamConfiguredChanged: {
@@ -549,3 +575,5 @@ Item {
     }
   }
 }
+
+

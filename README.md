@@ -16,6 +16,8 @@ native locking implementation and replaces only the visual interface.
 - Native Omarchy sleep, restart, shutdown, and fullscreen screenshot commands.
 - Avatar lookup in this order: AccountsService, `~/.face`, `~/.face.icon`, then
   the built-in Nerd Font fallback icon.
+- Optional lock-screen blank delay through `~/.config/omarchy/lock-screen.json`;
+  the default is 5 seconds.
 
 The plugin does not create a second lock daemon, replace PAM configuration, or
 implement a separate authentication flow. Enabling it disables the built-in
@@ -52,6 +54,19 @@ The plugin checks the following locations in order:
 4. Nerd Font default avatar
 
 The selected image is cropped into the original circular avatar frame.
+
+## Optional blank delay
+
+The lock screen blanks the display after five seconds by default. To change it,
+create `~/.config/omarchy/lock-screen.json`:
+
+```json
+{
+  "blankDelaySeconds": 30
+}
+```
+
+If the file is absent or invalid, the plugin uses the five-second default.
 
 ## Native integration
 
@@ -96,6 +111,7 @@ MIT. See [LICENSE](LICENSE).
 - 左下角显示电池、网络和指纹状态。
 - 使用 Omarchy 原生的睡眠、重启、关机和全屏截图命令。
 - 头像按以下顺序查找：AccountsService、`~/.face`、`~/.face.icon`、Nerd Font 默认头像。
+- 可通过 `~/.config/omarchy/lock-screen.json` 设置锁屏后的息屏延迟，默认 5 秒。
 
 插件不会创建第二个锁屏守护进程，不会修改 PAM 配置，也不会实现另一套认证逻辑。启用插件时会自动禁用 `omarchy.lock`；禁用插件后会恢复原生服务。
 
@@ -127,6 +143,18 @@ cp your-avatar.png ~/.face
 4. Nerd Font 默认头像
 
 头像会被裁切到原来的圆形头像框中。
+
+## 可选的息屏延迟
+
+锁屏后默认等待 5 秒关闭屏幕。可以创建 `~/.config/omarchy/lock-screen.json`：
+
+```json
+{
+  "blankDelaySeconds": 30
+}
+```
+
+如果文件不存在或内容无效，插件会使用默认的 5 秒。
 
 ## 与 Omarchy 原生实现的关系
 
@@ -168,6 +196,7 @@ MIT，详见 [LICENSE](LICENSE)。
 - 左下にバッテリー、ネットワーク、指紋の状態を表示。
 - Omarchy 標準のスリープ、再起動、シャットダウン、全画面スクリーンショットを使用。
 - アバターは AccountsService、`~/.face`、`~/.face.icon`、Nerd Font の順で検索。
+- `~/.config/omarchy/lock-screen.json` で画面消灯までの時間を設定できます。標準値は 5 秒です。
 
 別のロックデーモン、別の PAM 設定、別の認証フローは追加しません。プラグインを有効にすると `omarchy.lock` が自動的に無効になり、無効化すると標準サービスに戻ります。
 
@@ -199,6 +228,19 @@ cp your-avatar.png ~/.face
 4. Nerd Font のデフォルトアイコン
 
 画像は元の円形フレームに合わせて円形に切り抜かれます。
+
+## オプションの画面消灯遅延
+
+ロック後は標準で 5 秒後に画面を消灯します。変更する場合は
+`~/.config/omarchy/lock-screen.json` を作成します。
+
+```json
+{
+  "blankDelaySeconds": 30
+}
+```
+
+ファイルがない場合や内容が無効な場合は、5 秒の標準値が使われます。
 
 ## Omarchy 標準機能との統合
 
