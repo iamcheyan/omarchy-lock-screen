@@ -187,7 +187,9 @@ Item {
   }
 
   function runBlank() {
-    if (!blankProcess.running) blankProcess.running = true
+    // Keep the only active output alive while WlSessionLock owns the surface.
+    // Turning off the output creates a placeholder screen on this machine.
+    logEvent("blank-skipped: keep-output-alive")
   }
 
   function submitPassword(value) {
@@ -413,6 +415,7 @@ Item {
       root.strandedLockResolved = true
 
       // A lock taken while this was in flight is this shell's own.
+      root.strandedLock = false
       root.strandedLock = exitCode === 0 && !root.locked && !root.lockRequested
       root.recoverStrandedLock()
     }
@@ -521,7 +524,6 @@ Item {
   onPasswordPamConfiguredChanged: {
     if (!passwordPamConfigured) return
 
-    strandedLock = false
     strandedLockResolved = false
     strandedLockRetryTimer.rearm()
     checkStrandedLock()
@@ -538,7 +540,8 @@ Item {
 
     function lock(): string {
       if (!root.passwordPamConfigured) return "missing-pam"
-      if (!root.locked && !root.beginLock()) return "failed"
+      if (root.locked) return "ok"
+      if (!root.beginLock()) return "failed"
       return "ok"
     }
 
@@ -576,4 +579,3 @@ Item {
     }
   }
 }
-

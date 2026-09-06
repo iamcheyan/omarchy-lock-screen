@@ -11,9 +11,10 @@ native locking implementation and replaces only the visual interface.
 - Native Omarchy password PAM and fingerprint PAM authentication.
 - Native `Super+Ctrl+L` shortcut through the `omarchy.lock` clone mechanism.
 - Native screen stabilization, background loading, wake, and blanking behavior.
-- A themed lock-screen interface with time, date, avatar, and password entry.
-- Bottom status controls for battery, network, and fingerprint availability.
-- Native Omarchy sleep, restart, shutdown, and fullscreen screenshot commands.
+- A minimal lock-screen interface with the current wallpaper, time, date, avatar,
+  username, and password entry.
+- No network, battery, screenshot, sleep, restart, shutdown, or hibernate controls
+  are shown in the lock-screen interface.
 - Avatar lookup in this order: AccountsService, `~/.face`, `~/.face.icon`, then
   the built-in Nerd Font fallback icon.
 - Optional lock-screen blank delay through `~/.config/omarchy/lock-screen.json`;
@@ -76,13 +77,13 @@ If the file is absent or invalid, the plugin uses the five-second default.
 
 ## Native integration
 
-The plugin is declared as a clone of `omarchy.lock` and ships the current
-native `Service.qml` unchanged. The service continues to own:
+The plugin is declared as a clone of `omarchy.lock` and keeps the native
+`Service.qml` lifecycle as its baseline. The service continues to own:
 
 - `WlSessionLock` and secure lock-screen lifecycle;
 - password authentication through `omarchy-lock-password`;
 - fingerprint authentication through `omarchy-lock-fingerprint`;
-- monitor stabilization, background refresh, wake, and display blanking;
+- monitor stabilization, background refresh, wake, and lock lifecycle;
 - the native `lock` IPC target used by `omarchy-system-lock`.
 
 The UI calls Omarchy's existing commands for sleep, restart, shutdown, and
@@ -113,9 +114,8 @@ MIT. See [LICENSE](LICENSE).
 - 使用 Omarchy 原生密码 PAM 和指纹 PAM 认证。
 - 通过 clone `omarchy.lock` 接管系统原生 `Super+Ctrl+L` 快捷键。
 - 保留原生屏幕稳定等待、背景加载、唤醒和息屏逻辑。
-- 提供包含时间、日期、头像和密码输入的主题化锁屏界面。
-- 左下角显示电池、网络和指纹状态。
-- 使用 Omarchy 原生的睡眠、重启、关机和全屏截图命令。
+- 提供包含当前壁纸、时间、日期、头像、用户名和密码输入的简洁锁屏界面。
+- 不显示网络、电池、截图、睡眠、重启、关机或休眠按钮。
 - 头像按以下顺序查找：AccountsService、`~/.face`、`~/.face.icon`、Nerd Font 默认头像。
 - 可通过 `~/.config/omarchy/lock-screen.json` 设置锁屏后的息屏延迟，默认 5 秒。
 
@@ -170,13 +170,38 @@ cp your-avatar.png ~/.face
 
 ## 与 Omarchy 原生实现的关系
 
-插件声明为 `omarchy.lock` 的 clone，并保持当前原生 `Service.qml` 不变。以下功能仍由原生服务负责：
+插件声明为 `omarchy.lock` 的 clone，并以原生 `Service.qml` 生命周期为基线。以下功能仍由服务负责：
 
 - `WlSessionLock` 和安全锁屏生命周期；
 - `omarchy-lock-password` 密码认证；
 - `omarchy-lock-fingerprint` 指纹认证；
-- 屏幕稳定等待、背景刷新、唤醒和息屏；
+- 屏幕稳定等待、背景刷新、唤醒和锁屏生命周期；
 - `omarchy-system-lock` 使用的原生 `lock` IPC 入口。
+
+## 与 Shizuka SDDM 主题的一一对应关系
+
+本插件的 `LockView.qml` 与
+`/home/tetsuya/development/shizuka/Main.qml` 可以共享视觉方向：
+`LockView.qml` 用于 Quickshell 锁屏，`Main.qml` 用于 SDDM 登录界面。修改视觉
+设计时优先保持两者的主要布局和间距一致。
+
+以下内容属于建议共享的视觉规范：
+
+- 中央布局结构和组件顺序；
+- 头像尺寸、圆形遮罩、头像加载顺序；
+- 用户名的字号、字重和位置；
+- 提示文字、密码框、占位文字和提交图标；
+- 日期、时间的字号、字重、间距和位置；
+- 背景模糊、暗色遮罩、透明度和边框；
+- 底部操作按钮的尺寸、图标、字体和间距。
+
+对应文件：
+
+- `LockView.qml`
+- `/home/tetsuya/development/shizuka/Main.qml`
+
+认证、用户模型、会话模型和系统操作接口可以根据运行环境使用不同实现，
+但不应因此改变共享视觉参数。
 
 睡眠、重启、关机和截图按钮调用 Omarchy 已有的系统命令。截图使用 Omarchy 的默认保存位置，通常是 `~/Pictures/`，并保留原生文件名和通知行为。
 

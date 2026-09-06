@@ -1,11 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell
-import Quickshell.Io
-import Quickshell.Networking
-import Quickshell.Services.UPower
 import qs.Commons
-import qs.Ui
 
 FocusScope {
   id: root
@@ -19,22 +15,8 @@ FocusScope {
   property bool inputEnabled: false
   property bool loadBackground: false
   property string passwordText: ""
-  property bool showPassword: false
   property bool passwordVisible: false
-  property bool hibernateAvailable: false
 
-  readonly property var batteryDevice: UPower.displayDevice
-  readonly property bool batteryAvailable: !!(batteryDevice && batteryDevice.isPresent)
-  readonly property int batteryPercent: batteryAvailable ? Math.round((batteryDevice.percentage || 0) * 100) : 0
-  readonly property bool batteryCharging: batteryAvailable && !UPower.onBattery
-  readonly property var networkDevices: Networking.devices ? Networking.devices.values : []
-  readonly property var wiredNetwork: findNetworkDevice(DeviceType.Wired)
-  readonly property var wifiNetworkDevice: findNetworkDevice(DeviceType.Wifi)
-  readonly property var connectedWifi: findConnectedWifi()
-  readonly property bool networkAvailable: !!((wiredNetwork && wiredNetwork.connected) || connectedWifi)
-  readonly property string networkLabel: wiredNetwork && wiredNetwork.connected
-    ? "Ethernet"
-    : (connectedWifi && connectedWifi.ssid ? String(connectedWifi.ssid) : "Wi-Fi")
   readonly property var avatarCandidates: [
     "file:///var/lib/AccountsService/icons/" + (Quickshell.env("USER") || ""),
     "file://" + (Quickshell.env("HOME") || "") + "/.face",
@@ -56,25 +38,12 @@ FocusScope {
   focus: inputEnabled
   onInputEnabledChanged: if (inputEnabled) forceActiveFocus()
 
-  function findNetworkDevice(type) {
-    var fallback = null
-    var devices = root.networkDevices || []
-    for (var i = 0; i < devices.length; i++) {
-      var device = devices[i]
-      if (!device || device.type !== type) continue
-      if (device.connected) return device
-      if (!fallback) fallback = device
-    }
-    return fallback
-  }
-
-  function findConnectedWifi() {
-    var networks = root.wifiNetworkDevice && root.wifiNetworkDevice.networks
-      ? root.wifiNetworkDevice.networks.values : []
-    for (var i = 0; i < networks.length; i++) {
-      if (networks[i] && networks[i].connected) return networks[i]
-    }
-    return null
+  function cancelPasswordInput() {
+    if (!root.passwordVisible || root.authenticatingPassword) return
+    root.passwordTextEdited("")
+    root.clearFailureRequested()
+    root.passwordVisible = false
+    root.forceActiveFocus()
   }
 
   Timer {
@@ -88,25 +57,14 @@ FocusScope {
     }
   }
 
-  Process {
-    id: hibernateCheck
-    command: ["busctl", "call", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "CanHibernate"]
-    running: true
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: root.hibernateAvailable = String(text || "").includes("\"yes\"")
-    }
-  }
-
   Keys.onPressed: event => {
     root.wakeRequested()
     if (event.key === Qt.Key_Space && !root.passwordVisible) {
       root.passwordVisible = true
+      root.forceActiveFocus()
       event.accepted = true
-    } else if (event.key === Qt.Key_Escape) {
-      root.passwordTextEdited("")
-      root.clearFailureRequested()
-      root.passwordVisible = false
+    } else if (event.key === Qt.Key_Escape && root.passwordVisible) {
+      root.cancelPasswordInput()
       event.accepted = true
     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
       if (!root.passwordVisible) {
@@ -133,8 +91,7 @@ FocusScope {
     id: background
     anchors.fill: parent
     source: root.loadBackground && root.backgroundPath.length > 0
-      ? root.backgroundPath + "?v=" + root.backgroundVersion
-      : ""
+      ? root.backgroundPath + "?v=" + root.backgroundVersion : ""
     fillMode: Image.PreserveAspectCrop
     asynchronous: true
     cache: false
@@ -142,20 +99,18 @@ FocusScope {
     visible: false
   }
 
+  Rectangle { anchors.fill: parent; color: "#101014" }
+
   MultiEffect {
     anchors.fill: parent
     source: background
-    blurEnabled: true
+    blurEnabled: background.status === Image.Ready
     blur: 1.0
-    blurMax: 48
+    blurMax: 32
     saturation: -0.05
   }
 
-  Rectangle {
-    anchors.fill: parent
-    color: "#000000"
-    opacity: 0.30
-  }
+  Rectangle { anchors.fill: parent; color: "#000000"; opacity: 0.30 }
 
   Column {
     anchors.top: parent.top
@@ -168,6 +123,7 @@ FocusScope {
       text: root.dateText
       color: "#a0ffffff"
       font.pixelSize: 15
+      font.weight: Font.Medium
     }
 
     Text {
@@ -175,13 +131,14 @@ FocusScope {
       text: root.timeText
       color: "#f5ffffff"
       font.pixelSize: Math.min(96, Math.max(68, root.height * 0.11))
-      font.weight: Font.Light
+      font.weight: Font.Black
     }
   }
 
   Column {
-    anchors.centerIn: parent
-    anchors.verticalCenterOffset: Math.max(8, parent.height * 0.02)
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: Math.max(48, parent.height * 0.07)
+    anchors.horizontalCenter: parent.horizontalCenter
     width: Math.min(320, parent.width - 64)
     spacing: 10
 
@@ -220,9 +177,8 @@ FocusScope {
           smooth: true
           visible: root.avatarLoaded
           onStatusChanged: {
-            if (status === Image.Ready) {
-              root.avatarLoaded = true
-            } else if (status === Image.Error || status === Image.Null) {
+            if (status === Image.Ready) root.avatarLoaded = true
+            else if (status === Image.Error || status === Image.Null) {
               root.avatarLoaded = false
               if (root.avatarIndex + 1 < root.avatarCandidates.length)
                 root.avatarIndex += 1
@@ -236,12 +192,7 @@ FocusScope {
           anchors.fill: parent
           visible: false
           layer.enabled: true
-
-          Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: "white"
-          }
+          Rectangle { anchors.fill: parent; radius: width / 2; color: "white" }
         }
       }
 
@@ -260,12 +211,13 @@ FocusScope {
       text: Quickshell.env("USER") || ""
       color: "#e0ffffff"
       font.pixelSize: 16
+      font.weight: Font.DemiBold
     }
 
     Text {
       anchors.horizontalCenter: parent.horizontalCenter
       visible: !root.passwordVisible
-      text: root.fingerprintConfigured ? "Click or press Space · fingerprint ready" : "Click or press Space"
+      text: "Click or press Space"
       color: "#80ffffff"
       font.pixelSize: 13
     }
@@ -292,16 +244,14 @@ FocusScope {
         verticalAlignment: TextInput.AlignVCenter
         color: "#f5ffffff"
         font.pixelSize: 13
-        echoMode: root.showPassword ? TextInput.Normal : TextInput.Password
+        echoMode: TextInput.Password
         passwordCharacter: "•"
         text: root.passwordText
         enabled: root.inputEnabled && !root.authenticatingPassword
         focus: root.inputEnabled && root.passwordVisible
         activeFocusOnPress: false
         inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
-        onTextChanged: {
-          if (root.passwordText !== text) root.passwordTextEdited(text)
-        }
+        onTextChanged: if (root.passwordText !== text) root.passwordTextEdited(text)
         onAccepted: root.submitPassword(text)
         Keys.onPressed: root.wakeRequested()
       }
@@ -340,144 +290,6 @@ FocusScope {
       text: root.failureMessage
       color: "#e8aaa0"
       font.pixelSize: 12
-    }
-  }
-
-  Text {
-    anchors.left: parent.left
-    anchors.bottom: parent.bottom
-    anchors.leftMargin: Math.max(28, parent.width * 0.03)
-    anchors.bottomMargin: Math.max(22, parent.height * 0.04)
-    visible: root.fingerprintConfigured
-    text: "◉  Fingerprint"
-    color: "#b8ffffff"
-    font.pixelSize: 12
-  }
-
-  Row {
-    anchors.left: parent.left
-    anchors.bottom: parent.bottom
-    anchors.leftMargin: Math.max(28, parent.width * 0.03)
-    anchors.bottomMargin: Math.max(22, parent.height * 0.04)
-    spacing: 8
-
-    LockCornerButton {
-      visible: root.batteryAvailable
-      icon: root.batteryCharging ? "󰂄" : "󰁹"
-      label: root.batteryPercent + "%"
-      showLabel: true
-    }
-
-    LockCornerButton {
-      visible: root.fingerprintConfigured
-      icon: "󰈷"
-      label: "Fingerprint"
-      showLabel: false
-    }
-
-    LockCornerButton {
-      visible: root.networkAvailable
-      icon: "󰖩"
-      label: root.networkLabel
-      showLabel: true
-    }
-
-    LockCornerButton {
-      icon: "󰄀"
-      tooltip: "Screenshot"
-      onClicked: Quickshell.execDetached(["omarchy-capture-screenshot", "fullscreen", "save"])
-    }
-  }
-
-  Row {
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
-    anchors.rightMargin: Math.max(28, parent.width * 0.03)
-    anchors.bottomMargin: Math.max(22, parent.height * 0.04)
-    spacing: 6
-
-    LockCornerButton {
-      icon: "󰒲"
-      tooltip: "Sleep"
-      onClicked: Quickshell.execDetached(["omarchy-system-sleep-lock"])
-    }
-
-    LockCornerButton {
-      visible: root.hibernateAvailable
-      icon: "󰤄"
-      tooltip: "Hibernate"
-      onClicked: Quickshell.execDetached(["busctl", "call", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "Hibernate", "b", "true"])
-    }
-
-    LockCornerButton {
-      icon: "󰜉"
-      tooltip: "Restart"
-      onClicked: Quickshell.execDetached(["omarchy-system-reboot"])
-    }
-
-    LockCornerButton {
-      icon: "󰐥"
-      tooltip: "Shut Down"
-      onClicked: Quickshell.execDetached(["omarchy-system-shutdown"])
-    }
-  }
-
-  component LockCornerButton: Item {
-    id: action
-    property string icon: ""
-    property string label: ""
-    property string tooltip: ""
-    property bool showLabel: false
-    signal clicked()
-
-    implicitWidth: showLabel ? 68 : 36
-    implicitHeight: 36
-
-    Rectangle {
-      anchors.fill: parent
-      radius: height / 2
-      color: actionMouse.containsMouse ? "#24ffffff" : "#38000000"
-      border.width: 1
-      border.color: "#18ffffff"
-    }
-
-    Row {
-      anchors.centerIn: parent
-      spacing: 5
-
-      Text {
-        text: action.icon
-        color: "#e0ffffff"
-        font.pixelSize: 17
-        font.family: Style.font.family
-        anchors.verticalCenter: parent.verticalCenter
-      }
-
-      Text {
-        visible: action.showLabel
-        text: action.label
-        color: "#cfffffff"
-        font.pixelSize: 12
-        anchors.verticalCenter: parent.verticalCenter
-      }
-    }
-
-    MouseArea {
-      id: actionMouse
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: action.clicked()
-    }
-
-    Text {
-      anchors.horizontalCenter: parent.horizontalCenter
-      anchors.bottom: parent.top
-      anchors.bottomMargin: 8
-      visible: actionMouse.containsMouse && !action.showLabel && action.tooltip.length > 0
-      text: action.tooltip
-      color: "#cfffffff"
-      font.pixelSize: 11
     }
   }
 }
