@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 
 FocusScope {
@@ -22,10 +23,16 @@ FocusScope {
     "file://" + (Quickshell.env("HOME") || "") + "/.face",
     "file://" + (Quickshell.env("HOME") || "") + "/.face.icon"
   ]
+  readonly property var avatarPaths: [
+    "/var/lib/AccountsService/icons/" + (Quickshell.env("USER") || ""),
+    (Quickshell.env("HOME") || "") + "/.face",
+    (Quickshell.env("HOME") || "") + "/.face.icon"
+  ]
   property int avatarIndex: 0
   property bool avatarLoaded: false
+  property bool avatarCandidateAvailable: false
   readonly property string avatarSource: avatarIndex < avatarCandidates.length
-    ? avatarCandidates[avatarIndex] : ""
+    && avatarCandidateAvailable ? avatarCandidates[avatarIndex] : ""
 
   signal submitPassword(string password)
   signal passwordTextEdited(string password)
@@ -37,6 +44,23 @@ FocusScope {
 
   focus: inputEnabled
   onInputEnabledChanged: if (inputEnabled) forceActiveFocus()
+  onAvatarIndexChanged: {
+    avatarCandidateAvailable = false
+    avatarLoaded = false
+    avatarProbe.reload()
+  }
+
+  FileView {
+    id: avatarProbe
+    path: root.avatarIndex < root.avatarPaths.length ? root.avatarPaths[root.avatarIndex] : ""
+    printErrors: false
+    onLoaded: root.avatarCandidateAvailable = true
+    onLoadFailed: {
+      root.avatarCandidateAvailable = false
+      if (root.avatarIndex + 1 < root.avatarCandidates.length)
+        root.avatarIndex += 1
+    }
+  }
 
   function cancelPasswordInput() {
     if (!root.passwordVisible || root.authenticatingPassword) return
