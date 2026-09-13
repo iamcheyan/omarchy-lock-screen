@@ -123,7 +123,6 @@ FocusScope {
       text: root.dateText
       color: "#a0ffffff"
       font.pixelSize: 15
-      font.weight: Font.Medium
     }
 
     Text {
@@ -131,7 +130,7 @@ FocusScope {
       text: root.timeText
       color: "#f5ffffff"
       font.pixelSize: Math.min(96, Math.max(68, root.height * 0.11))
-      font.weight: Font.Black
+      font.weight: Font.Light
     }
   }
 

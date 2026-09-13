@@ -13,7 +13,7 @@
 锁屏只负责显示和登录：
 
 - 模糊的当前壁纸；
-- 中间头像；
+- 屏幕下方的头像、用户名和登录区域；
 - 时间；
 - 日期；
 - 用户名；
@@ -298,4 +298,3 @@ cp LockView.qml.before-minimal-refactor LockView.qml
 - 不在锁屏期间切换 DPMS；
 - 每次升级 Quickshell、Hyprland 或 Omarchy 后，重新测试“锁屏超过 blank delay”；
 - 如果只想改变颜色、间距、模糊程度和头像样式，只修改 LockView，不修改 Service。
-
